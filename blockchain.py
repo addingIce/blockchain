@@ -83,7 +83,7 @@ class Blockchain(object):
 		:return: <str>
 		"""
 		# We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
-		block_string == json.dumps(block,sort_keys=True).encode()
+		block_string = json.dumps(block,sort_keys=True).encode()
 		return hashlib.sha256(block_string).hexdigest()
 
 	@property
@@ -136,7 +136,7 @@ blockchain = Blockchain()
 2.通过新增一个交易授予矿工(自己)一个币
 3.构造新区块并将其添加到链中
 """
-@app.route('/mine', methods = ['GETA'])
+@app.route('/mine', methods = ['GET'])
 def mine():
 	#We run the proof of work algorithm to get the next proof
 	last_block = blockchain.last_block
