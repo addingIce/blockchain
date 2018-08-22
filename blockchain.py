@@ -25,7 +25,7 @@ block = {
 	
 }
 '''
-#创建Blockchain类
+#-------------创建Blockchain类----------------
 class Blockchain(object):
 	def __init__(self):
 		self.chain= []					#储存区块链
@@ -56,7 +56,8 @@ class Blockchain(object):
 
 		self.chain.append(block)
 		return block
-	def new_transaction(self):
+
+	def new_transaction(self, sender, recipient, amount):
 		#Adds a new transaction to the list of transaction
 		"""
 		生成新的交易信息,并将信息加入到下一个待挖的区块中
@@ -88,7 +89,7 @@ class Blockchain(object):
 	@property
 	def last_block(self):
 		#Returns the last Block in the chain
-		pass
+		return self.chain[-1]
 
 	def proof_of_work(self,last_proof):
 		"""
@@ -115,3 +116,78 @@ class Blockchain(object):
 		guess = f'{last_proof}{proof}'.encode()
 		guess_hash = hashlib.sha256(guess).hexdigest()
 		return guess_hash[:4] == "0000"
+
+#-------创建节点,Flask服务器将扮演区块链网络中的一个节点------
+
+#Instantiate our Node 实例化
+app = Flask(__name__)
+
+#Generate a globally unique address for this node
+#为节点创建一个名字(地址)
+node_identifier = str(uuid4()).replace('-','')
+
+#Instantiate the Blockchain
+#实例Blockchain类
+blockchain = Blockchain()
+
+#创建/mine GET接口,挖掘新块
+"""
+1.计算工作量证明PoW
+2.通过新增一个交易授予矿工(自己)一个币
+3.构造新区块并将其添加到链中
+"""
+@app.route('/mine', methods = ['GETA'])
+def mine():
+	#We run the proof of work algorithm to get the next proof
+	last_block = blockchain.last_block
+	last_proof = last_block['proof']
+	proof = blockchain.proof_of_work(last_proof)
+
+	#给工作量证明的节点提供奖励.
+	#发送者为"0"表明是新挖出的币
+	blockchain.new_transaction(
+		sender = "0",
+		recipient = node_identifier,
+		amount = 1
+	)
+
+	#Forge the new Block by adding it to the chain
+	block = blockchain.new_block(proof)
+
+	response = {
+		'message': "New Block Forged",
+		'index': block['index'],
+		'transactions': block['transactions'],
+		'proof': block['proof'],
+		'previous_hash': block['previous_hash']
+	}
+
+	return jsonify(response), 200
+
+#创建/transactions/new POST接口,创建一个交易并添加到新块
+@app.route('/transactions/new', methods = ['POST'])
+def new_transaction():
+	values = request.get_json()
+
+	#Check that the required fields are in the POST'ed data
+	required = ['sender', 'recipient', 'amount']
+	if not all(k in values for k in required):
+		return 'Missing values', 400
+
+	#Create a new Transaction
+	index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
+
+	response = {'message': f'Transaction will be added to Block{index}'}
+	return jsonify(response), 201
+
+#创建/chain接口,返回整个区块链
+@app.route('/chain', methods = ['GET'])
+def full_chain():
+	response = {
+		'chain': blockchain.chain,
+		'length': len(blockchain.chain)
+	}
+	return jsonify(response), 200
+
+if __name__ == '__main__':
+	app.run(host = '0.0.0.0', port=5000)
