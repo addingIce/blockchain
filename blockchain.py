@@ -1,3 +1,4 @@
+#coding: UTF-8
 import hashlib
 import json
 from time import time
@@ -138,7 +139,7 @@ class Blockchain(object):
 		last_block = chain[0]
 		current_index = 1
 
-		while current_index < len(chain)
+		while current_index < len(chain):
 			block = chain[current_index]
 			print(f'{last_block}')
 			print(f'{block}')
