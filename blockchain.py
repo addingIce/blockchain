@@ -170,7 +170,7 @@ class Blockchain(object):
 		max_length = len(self.chain)
 
 		#Grab and verity the chains from all the nodes in our network
-		for nodes in neighbours:
+		for node in neighbours:
 			response = requests.get(f'http://{node}/chain')
 
 			if response.status_code == 200:
@@ -274,7 +274,7 @@ def full_chain():
 """
 @app.route('/nodes/register', methods = ['POST'])
 def register_nodes():
-	values = requests.get_json(force = True)
+	values = request.get_json(force = True)
 
 	nodes = values.get('nodes')
 	if nodes is None:
