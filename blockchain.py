@@ -167,13 +167,17 @@ def mine():
 #创建/transactions/new POST接口,创建一个交易并添加到新块
 @app.route('/transactions/new', methods = ['POST'])
 def new_transaction():
-	values = request.get_json()
-
+	values = request.get_json(force=True)
+"""
+get_json 这个函数默认情况下只对 mime 为 application/json 的请求可以正确解析。
+所以解决办法是
+    http 请求增加 Content-Type:application/json header
+    或者 使用 request.get_json(force=True) 忽略mimetype
+"""
 	#Check that the required fields are in the POST'ed data
 	required = ['sender', 'recipient', 'amount']
 	if not all(k in values for k in required):
 		return 'Missing values', 400
-
 	#Create a new Transaction
 	index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
 
